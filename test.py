@@ -2,7 +2,7 @@ import unittest
 from main import Earley
 
 
-class TestEarley1(unittest.TestCase):
+class EasyTestFromExample(unittest.TestCase):
     earley = Earley()
 
     def setUp(self):
@@ -29,7 +29,7 @@ class TestEarley1(unittest.TestCase):
             self.assertEqual(self.earley.predict_result(string), result)
 
 
-class TestEarley2(unittest.TestCase):
+class CheckWayFromNetermToNeterm(unittest.TestCase):
     earley = Earley()
 
     def setUp(self):
@@ -63,7 +63,7 @@ class TestEarley2(unittest.TestCase):
             self.assertEqual(self.earley.predict_result(string), result)
 
 
-class TestEarley3(unittest.TestCase):
+class CheckDoubleNeterminalInGrammar(unittest.TestCase):
     earley = Earley()
 
     def setUp(self):
@@ -90,7 +90,7 @@ class TestEarley3(unittest.TestCase):
             self.assertEqual(self.earley.predict_result(string), result)
 
 
-class TestEarley4(unittest.TestCase):
+class CheckMoreEmptyNeterminals(unittest.TestCase):
     earley = Earley()
 
     def setUp(self):
@@ -117,7 +117,7 @@ class TestEarley4(unittest.TestCase):
             self.assertEqual(self.earley.predict_result(string), result)
 
 
-class TestEarley5(unittest.TestCase):
+class MiddleTest1(unittest.TestCase):
     earley = Earley()
 
     def setUp(self):
@@ -147,7 +147,7 @@ class TestEarley5(unittest.TestCase):
             self.assertEqual(self.earley.predict_result(string), result)
 
 
-class TestEarley6(unittest.TestCase):
+class MiddleTest2(unittest.TestCase):
     earley = Earley()
 
     def setUp(self):
@@ -175,7 +175,7 @@ class TestEarley6(unittest.TestCase):
             self.assertEqual(self.earley.predict_result(string), result)
 
 
-class TestEarley7(unittest.TestCase):
+class TheStrongestTestWithTheLongestStrings(unittest.TestCase):
     earley = Earley()
 
     def setUp(self):

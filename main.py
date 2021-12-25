@@ -19,6 +19,12 @@ class Earley:
             self.right = []
             self.i = 0
 
+        def __eq__(self, other):
+            return self.i == other.i and \
+                   self.right == other.right and \
+                   self.left == other.left and \
+                   self.neterminal_from == other.neterminal_from
+
     def fit(self, G):
         n = G['kol_neterms']
         e = G['kol_terms']
@@ -49,52 +55,54 @@ class Earley:
         return
 
     def scan(self, j, w):
-        for a in self.E:
-            if a not in self.D[j]:
+        if j >= len(w):
+            return
+        a = w[j]
+        if a not in self.D[j]:
+            return
+        for st in self.D[j][a]:
+            new_st = self.State()
+            new_st.right = st.right.copy()
+            new_st.left = st.left.copy()
+            new_st.i = st.i
+            new_st.neterminal_from = st.neterminal_from
+            if not new_st.right:
+                if new_st not in self.D[j + 1]['$']:
+                    self.D[j + 1]['$'].append(new_st)
                 continue
-            for st in self.D[j][a]:
-                if a == w[j]:
-                    new_st = self.State()
-                    new_st.right = st.right.copy()
-                    new_st.left = st.left.copy()
-                    new_st.i = st.i
-                    new_st.neterminal_from = st.neterminal_from
-                    if not new_st.right:
-                        if new_st not in self.D[j + 1]['$']:
-                            self.D[j + 1]['$'].append(new_st)
-                        continue
-                    new_st.left.append(new_st.right[0])
-                    new_st.right.pop(0)
-                    if not new_st.right:
-                        if new_st not in self.D[j + 1]['$']:
-                            self.D[j + 1]['$'].append(new_st)
-                        continue
-                    beta = new_st.right[0].copy()
-                    if beta[0] == 'N':
-                        beta = self.N[beta[1]]
-                    else:
-                        beta = self.E[beta[1]]
-                    if st in self.D[j + 1][beta]:
-                        continue
-                    self.D[j + 1][beta].append(new_st)
+            new_st.left.append(new_st.right[0])
+            new_st.right.pop(0)
+            if not new_st.right:
+                if new_st not in self.D[j + 1]['$']:
+                    self.D[j + 1]['$'].append(new_st)
+                continue
+            first_symb_after_dot = new_st.right[0].copy()
+            if first_symb_after_dot[0] == 'N':
+                first_symb_after_dot = self.N[first_symb_after_dot[1]]
+            else:
+                first_symb_after_dot = self.E[first_symb_after_dot[1]]
+            if st in self.D[j + 1][first_symb_after_dot]:
+                continue
+            self.D[j + 1][first_symb_after_dot].append(new_st)
 
     def complete(self, j, w):
         for st in self.D[j]['$']:
             i = st.i
             neterm = st.neterminal_from
-            for rul in self.D[i][self.N[neterm]]:
+            if self.N[neterm] not in self.D[i]:
+                continue
+            for rule in self.D[i][self.N[neterm]]:
                 new_st = self.State()
-                new_st.right = rul.right.copy()
-                new_st.left = rul.left.copy()
-                new_st.i = rul.i
-                new_st.neterminal_from = rul.neterminal_from
+                new_st.right = rule.right.copy()
+                new_st.left = rule.left.copy()
+                new_st.i = rule.i
+                new_st.neterminal_from = rule.neterminal_from
                 if not new_st.right:
                     if new_st not in self.D[j]['$']:
                         self.D[j]['$'].append(new_st)
                     continue
                 new_st.left.append(new_st.right[0])
                 new_st.right.pop(0)
-                first_symb_after_dot = ''
                 if not new_st.right:
                     if new_st not in self.D[j]['$']:
                         self.D[j]['$'].append(new_st)
@@ -109,34 +117,33 @@ class Earley:
 
     def predict(self, j, w):
         for neterm in self.N:
-            if neterm not in self.D[j]:
+            if neterm not in self.P:
                 continue
-            for st in self.D[j][neterm]:
-                for rule in self.P[neterm]:
-                    new_st = self.State()
-                    new_st.neterminal_from = self.from_net_symb_to_int[neterm]
-                    new_st.i = j
-                    new_st.left = []
-                    new_st.right = rule.copy()
-                    first_symb_after_dot = ''
-                    if not new_st.right:
-                        if new_st not in self.D[j]['$']:
-                            self.D[j]['$'].append(new_st)
-                        continue
-                    if new_st.right[0][0] == 'N':
-                        first_symb_after_dot = self.N[new_st.right[0][1]]
-                    else:
-                        first_symb_after_dot = self.E[new_st.right[0][1]]
-                    if first_symb_after_dot not in self.D[j]:
-                        self.D[j][first_symb_after_dot] = []
-                    fl = 0
-                    for elem in self.D[j][first_symb_after_dot]:
-                        if new_st.i == elem.i and new_st.right == elem.right and new_st.left == elem.left and new_st.neterminal_from == elem.neterminal_from:
-                            fl = 1
-                            break
-                    if fl:
-                        continue
-                    self.D[j][first_symb_after_dot].append(new_st)
+            for rule in self.P[neterm]:
+                new_st = self.State()
+                new_st.neterminal_from = self.from_net_symb_to_int[neterm]
+                new_st.i = j
+                new_st.left = []
+                new_st.right = rule.copy()
+                if not new_st.right:
+                    if new_st not in self.D[j]['$']:
+                        self.D[j]['$'].append(new_st)
+                    continue
+                if new_st.right[0][0] == 'N':
+                    first_symb_after_dot = self.N[new_st.right[0][1]]
+                else:
+                    first_symb_after_dot = self.E[new_st.right[0][1]]
+                if first_symb_after_dot not in self.D[j]:
+                    self.D[j][first_symb_after_dot] = []
+                fl = 0
+                for elem in self.D[j][first_symb_after_dot]:
+
+                    if new_st == elem:
+                        fl = 1
+                        break
+                if fl:
+                    continue
+                self.D[j][first_symb_after_dot].append(new_st)
 
     def predict_result(self, word):
         for symb in word:
@@ -160,13 +167,14 @@ class Earley:
                 self.D[i][A] = []
             self.D[i]['$'] = []
         self.D[0]['$'] = []
-
-        while 1:
+        tmp = self.D[0].copy()
+        self.predict(0, word)
+        self.complete(0, word)
+        while tmp != self.D[0]:
             tmp = self.D[0].copy()
             self.predict(0, word)
             self.complete(0, word)
-            if tmp == self.D[0]:
-                break
+
         for j in range(1, len(word) + 1):
             self.scan(j - 1, word)
             while 1:
@@ -186,7 +194,7 @@ class Earley:
         return False
 
 
-'''def input_data(G):
+def input_data(G):
     G['kol_neterms'], G['kol_terms'], G['kol_rules'] = map(int, input().split())
     G['neterms'] = input()
     G['alphabet'] = input()
@@ -210,5 +218,5 @@ def main():
         else:
             print("NO")
 
-
-main()'''
+if __name__ == '__main__':
+    main()
