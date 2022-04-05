@@ -1,0 +1,5 @@
+.idea
+.coverage
+.pytest_cache
+.DS_STORE
+__pycache__
